@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.truthgarnet.shopping.order.OrderEntity.OrderStatus;
 import com.truthgarnet.shopping.orderItem.OrderItemEntity;
@@ -32,7 +33,7 @@ public class OrderService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
-
+    @Transactional 
     public OrderResponse insertOrders(OrderRequest orderRequest) {
         // 1. order 생성
         OrderEntity orderEntity = new OrderEntity();
