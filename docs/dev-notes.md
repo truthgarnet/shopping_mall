@@ -1,6 +1,6 @@
 # Dev Notes
 
-## 2026-08-28 주문 API
+## 260828
 
 ### API 메서드 네이밍
 
@@ -39,7 +39,7 @@ void findByProductSeq() {
 개별 조회: 444.1992ms
 ```
 
-## 2026-09-02
+## 260902
 
 ### @OneToMany vs FK 값만 필드로
 
@@ -53,7 +53,7 @@ void findByProductSeq() {
 **단점**
 
 * N+1 문제 발생: 사용하기에는 편리하지만, 항상 대두되는 게 N+1문제가 발생한다. 그래서 이 문제를 해결하는 것보다, 필드로 선언하면 발생하지 않는 문제기 때문에 쿼리로 가는 게 편리하다는 의견도 존재했다.
-  
+
   * 주문 목록을 조회하고 각 주문의 items를 순회하면 주문 개수만큼 추가 쿼리가 나감 (fetch join 이나 @EntityGraph로 따로 신경 써야 함)
 * List 컬렉션에 orphamRemoval / cascade REMOVE 쓰면 Hiberate가 "전부 삭제 후 재삽입" 방식으로 동작해서 예상 못한 쿼리가 많이 나갈 수 있음
 * Lazy 로딩이면 트랜잭션 / 세션 밖에서 접근 시 LazyInitializationException, Eager면 항상 다 긁어옴
@@ -75,37 +75,39 @@ void findByProductSeq() {
 
 ---
 
-### GenerationType.IDENTITY vs GenertationType.SEQUENCE vs GenerationType.AUTO
+## GenerationType.IDENTITY vs GenertationType.SEQUENCE vs GenerationType.AUTO
 
-#### IDENTITY
+### IDENTITY
 
 - **DB에서 위임하는 전략** (MySQL AUTO_INCREMENT, H2/PostgreSQL IDENTITY 컬럼 등)
 - Hibernate 입장에서 영속성 컨텍스트에 엔티티를 관리하려면 ID가 필요한데, 그 ID를 얻으려면 무조건 즉시 INSERT 날려야함
 - JDBC batch insert가 사실상 안됨. saveAll()를 호출해도 하나마다 **개별 INSERT가 즉시 나감**
 
-#### SEQUENCE
+### SEQUENCE
 
 - INSERT 전에 미리 시퀀스에서 다음 값을 받아둘 수 있어서, Hibernate가 여러 INSERT를 진짜 batch를 묶어서 보낼 수 있음
-- 
+-
 
-#### AUTO
+### AUTO
 
 - JPA Hibernate가 알아서 골라서 개발자가 DB 종류를 신경 안 써도 되고, DB를 바꿔도 코드는 그대로 사용가능
 - H2처럼 시퀀스를 지원하는 DB에서는 보통 SEQUNECE 전략 사용
-  
+
   - IDENTITY와 SEQUENCE 둘다 지원하지만, SEQUNECE를 선택하는 이유
   - 우선순위에 따라 선택하게 됨(Hibernate 버전마다 다르게 진행됨으로 확인이 필요하다)
-  
+
+
   | Hibernate   | `AUTO`의기본적인해석             | MySQL에서    | PostgreSQL/H2등Sequence지원DB |
-| ----------- | -------------------------------- | ------------ | ----------------------------- |
-| **4.x이하** | DBDialect의`native` 전략         | **IDENTITY** | 주로SEQUENCE                  |
-| **5.x**     | `SequenceStyleGenerator`         | **TABLE**    | SEQUENCE                      |
-| **6.x**     | `SequenceStyleGenerator`         | **TABLE**    | SEQUENCE                      |
-| **7.x**     | DB기능에따라SEQUENCE/TABLE등선택 | **TABLE**    | SEQUENCE                      |
-  
+  | ----------- | -------------------------------- | ------------ | ----------------------------- |
+  | **4.x이하** | DBDialect의`native` 전략         | **IDENTITY** | 주로SEQUENCE                  |
+  | **5.x**     | `SequenceStyleGenerator`         | **TABLE**    | SEQUENCE                      |
+  | **6.x**     | `SequenceStyleGenerator`         | **TABLE**    | SEQUENCE                      |
+  | **7.x**     | DB기능에따라SEQUENCE/TABLE등선택 | **TABLE**    | SEQUENCE                      |
+
+
   - 이는 앞서 말한 **batch insert (성능)** 가 가능하기 때문에, Hibernate는 AUTO로 설정 했을 때 먼저 SEQUENCE를 선택하게 된다.
 
-#### TABLE
+### TABLE
 
 - SEQUENCE를 제공하지 않는 DB를 대체하기 위해서 사용하는 방법으로, PK 번호를 발급하기 위한 별도의 테이블을 하나 두는 방식이다.
 - `orderRepository.save();` 을 작업하면 아래와 같이 PK를 검색하는 쿼리가 발생한다.
@@ -147,7 +149,7 @@ FOR UPDATE;
 1. JDK 동적 프록시: 대상 클래스가 인터페이스를 구현하고 있으면, 그 인터페이스를 흉내 내는 프록시 생성
 2. CGLIB: 인터페이스가 없다면, 그 클래스 자체를 상속하는 자식 클래스를 만들어서 메서드를 오버라이드
 
-! 여기에서 프록시를 만들기 위해서는 `public`으로 구현해야하는 이유가 나온다.
+여기에서 프록시를 만들기 위해서는 `public`으로 구현해야하는 이유가 나온다.
 인터페이스를 구현하기 위해서는 public으로 선언해야하는 데, 그렇다면 CGLIB는 public 이 아닌 `protected`와 `private`으로 구현할 수 있지 않을 까 싶은데, 이는 **Spring**에서 막아놨다.
 
 => 그 이유는 Spring에서는 코드로 봐서는 이것이 JDK 동적 프록시인지 CGLIB인지 모르기 때문이다. 그렇기 때문에, Spring은 JDK이든 `CGLIB`이든 무조건 public 만 지원한다는 규칙을 정했다.
@@ -170,3 +172,42 @@ public String getProductName() {
 
 이는 Jackson만의 규칙이 아닌 **JavaBean 스펙**이라는 초창기 부터 있던 관례이다.
 
+---
+
+## 260904
+
+### @Transactional import 어느 것을 해야할까?
+
+`@Transactional`은 두 개의 import 가 있다.
+
+하나는 **Spring**에서 제공해주는 것이고, 하나는 **Jakarta EE**에서 제공해주는 것이다.
+
+Jakarta @Transactional은 표준적인 트랜잭션 경계와 전파, 롤백 정책을 제공하고, Spring @Transactional은 이를 확장해서 isolation level, readOnly, timeout, transaction manager 지정 등 더 세밀한 트랜잭션 제어 기능을 제공한다.
+
+### @NoArgsContructor 을 사용해야 하는 이유
+
+@AllArgsContructor를 붙이면 자바 규칙에 따라 기본 생성자가 사라진다.
+
+Jackson과 Hibernate는 **빈 객체를 먼저 만들고 값을 채우는**방식으로 동작하는 데, 그 첫 단계에서 호출할 기본 생성자가 없어서 런타임에 실패한다.
+
+#### 다른 대안
+
+@NoArgsConstructor을 사용하지 않는 방법은 `Java 17`에서 나왔다.
+
+요청 DTO처럼 불변이어도 되는 것을 **record**가 Lombok 조합을 없애준다.
+
+record는 **데이터를 담기 위한 클래스를 간단하게 표현할 수 있는 문법** 이라고 생각하면 된다.
+
+record는 자동으로 생성자, 값 접근 메서드, `equals()`, `hasCode()`, `toString()`을 만들어준다.
+
+```java
+
+public record OrderItemRequest(
+    Long productSeq,
+    Integer quantity
+) {}
+```
+
+### Rollback 테스트는 어떤 어노테이션으로 진행
+
+서비스 로직을 테스트 했을 때는, @DataJpaTest로 진행했었다.
