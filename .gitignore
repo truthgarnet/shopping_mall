@@ -33,3 +33,6 @@ build/
 .vscode/
 
 *.log
+
+# 로컬 DB 접속 정보 (비밀번호 포함)
+application-mysql.properties

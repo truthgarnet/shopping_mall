@@ -11,10 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.truthgarnet.shopping.product.ProductEntity;
 import com.truthgarnet.shopping.product.ProductRepository;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 
 import jakarta.persistence.EntityManager;
 
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class ProductRepositoryTest {
 
     @Autowired
