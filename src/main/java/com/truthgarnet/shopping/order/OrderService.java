@@ -49,7 +49,7 @@ public class OrderService {
         List<OrderItemRequest> items = orderRequest.getItems();
         List<Long> productSeqs = items.stream().map(item -> (item.getProductSeq())).collect(Collectors.toList());
 
-        List<ProductEntity> products = productRepository.findByProductSeqIn(productSeqs);
+        List<ProductEntity> products = productRepository.findByProductSeqInOrderByProductSeqAsc(productSeqs);
 
         Map<Long, ProductEntity> productMap = products.stream()
             .collect(Collectors.toMap(
