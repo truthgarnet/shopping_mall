@@ -1,7 +1,6 @@
 package com.truthgarnet.shopping.order;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,6 +44,7 @@ public class OrderServiceConcurrencyTest {
 
         // 성공 횟수를 셀 수 있는 변수
         AtomicInteger success = new AtomicInteger(0);
+        AtomicInteger outOfStockCount = new AtomicInteger(0);
 
         for(int i = 0; i < threadCount; i++) {
             executorService.submit(() -> {
@@ -54,7 +54,7 @@ public class OrderServiceConcurrencyTest {
 
                     success.incrementAndGet();
                 } catch (IllegalArgumentException e) {
-
+                    outOfStockCount.incrementAndGet();
                 } finally {
                     latch.countDown();
                 }
@@ -63,6 +63,8 @@ public class OrderServiceConcurrencyTest {
         latch.await();
 
         Assertions.assertEquals(1, success.get());
+        
+        Assertions.assertEquals(9, outOfStockCount.get());
     }
     
 }
