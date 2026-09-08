@@ -66,7 +66,7 @@ class ProductRepositoryTest {
     void findByProductSeqIn() {
         long start = System.nanoTime();
 
-        productRepository.findByProductSeqIn(productSeqs);
+        productRepository.findByProductSeqInOrderByProductSeqAsc(productSeqs);
 
 
         long end = System.nanoTime();
