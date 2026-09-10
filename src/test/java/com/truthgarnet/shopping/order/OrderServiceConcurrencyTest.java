@@ -38,15 +38,19 @@ public class OrderServiceConcurrencyTest {
         List<OrderItemRequest> list = List.of(orderItemRequest);
         OrderRequest orderRequest = new OrderRequest(list);
 
-        int threadCount = 10;
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-        CountDownLatch latch = new CountDownLatch(threadCount);
+        int poolSize = 100;
+        int taskCount = 1000;
+        ExecutorService executorService = Executors.newFixedThreadPool(poolSize);
+        CountDownLatch latch = new CountDownLatch(taskCount);
 
         // 성공 횟수를 셀 수 있는 변수
         AtomicInteger success = new AtomicInteger(0);
         AtomicInteger outOfStockCount = new AtomicInteger(0);
+        AtomicInteger fail = new AtomicInteger(0);
 
-        for(int i = 0; i < threadCount; i++) {
+        long start = System.nanoTime();
+
+        for(int i = 0; i < taskCount; i++) {
             executorService.submit(() -> {
 
                 try {
@@ -55,16 +59,23 @@ public class OrderServiceConcurrencyTest {
                     success.incrementAndGet();
                 } catch (IllegalArgumentException e) {
                     outOfStockCount.incrementAndGet();
-                } finally {
+                } catch (Exception e) {
+                    fail.incrementAndGet();
+                }
+                finally {
                     latch.countDown();
                 }
             });
         }
         latch.await();
 
+        long end = System.nanoTime();
+
+        System.out.println("속도 조회: " + (end - start) / 1_000_000.0 + "ms");
+        System.out.println("그 외 예외" + fail);
         Assertions.assertEquals(1, success.get());
         
-        Assertions.assertEquals(9, outOfStockCount.get());
+        Assertions.assertEquals(999, outOfStockCount.get());
     }
     
 }
