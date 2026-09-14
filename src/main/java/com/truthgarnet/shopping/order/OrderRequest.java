@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class OrderRequest {
     
     @Valid 
-    @NotEmpty 
-    List<OrderItemRequest> items;
+    @NotEmpty(message = "주문상품을 넣어주세요.")
+    private List<OrderItemRequest> items;
 
 }

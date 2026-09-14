@@ -10,12 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderItemRequest {
-    @NotNull
-    @Positive 
+    
+    @NotNull(message = "상품 번호를 입력해주세요.")
+    @Positive(message = "상품 번호는 1부터 입니다.") 
     private Long productSeq;
 
-    @NotNull
-    @Positive
+    @NotNull(message = "수량을 입력해야 합니다.")
+    @Positive(message = "수량은 1개 이상이어야 합니다.")
     private Integer quantity; 
 
 }
