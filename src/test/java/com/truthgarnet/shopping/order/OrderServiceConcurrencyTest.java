@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import com.truthgarnet.shopping.common.CustomException;
 import com.truthgarnet.shopping.orderItem.OrderItemRequest;
 import com.truthgarnet.shopping.product.ProductEntity;
 import com.truthgarnet.shopping.product.ProductRepository;
@@ -57,7 +58,7 @@ public class OrderServiceConcurrencyTest {
                     orderService.insertOrders(orderRequest);
 
                     success.incrementAndGet();
-                } catch (IllegalArgumentException e) {
+                } catch (CustomException e) {
                     outOfStockCount.incrementAndGet();
                 } catch (Exception e) {
                     fail.incrementAndGet();
