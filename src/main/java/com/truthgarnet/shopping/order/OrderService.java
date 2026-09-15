@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.truthgarnet.shopping.common.CustomException;
 import com.truthgarnet.shopping.order.OrderEntity.OrderStatus;
 import com.truthgarnet.shopping.orderItem.OrderItemEntity;
 import com.truthgarnet.shopping.orderItem.OrderItemRepository;
@@ -65,7 +66,7 @@ public class OrderService {
                 stock -= orderItem.getQuantity();
                 product.setStock(stock);
             } else {
-                throw new IllegalArgumentException(product.getProductName() + " 는 재고가 부족한 상품입니다.");
+                throw new CustomException("OUT_OF_STOCK", product.getProductName() + " 는 재고가 부족한 상품입니다.");
             }
             productRepository.save(product);
         }
