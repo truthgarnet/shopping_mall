@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ import com.truthgarnet.shopping.product.ProductEntity;
 import com.truthgarnet.shopping.product.ProductRepository;
 
 @SpringBootTest
-public class OrderRollbackTest {
+public class OrderServiceTest {
 
     @Autowired
     private OrderService orderService;
@@ -57,7 +58,7 @@ public class OrderRollbackTest {
     }
 
     @Test
-    public void insertOrders() {
+    public void insertOrdersRollback() {
         // when 주문 요청을 만든다.
         OrderItemRequest itemA = new OrderItemRequest(saveProductsSeq.get(0), 5);
         OrderItemRequest itemB = new OrderItemRequest(saveProductsSeq.get(1), 10);
@@ -66,12 +67,22 @@ public class OrderRollbackTest {
         OrderRequest orderRequest = new OrderRequest(oRequests);
 
         assertThatThrownBy(() -> orderService.insertOrders(orderRequest)).isInstanceOf(CustomException.class)
-                .hasMessageContaining("는 재고가 부족한 상품입니다.").extracting("code").isEqualTo("OUT_OF_STOCK");
+            .hasMessageContaining("는 재고가 부족한 상품입니다.").extracting("code").isEqualTo("OUT_OF_STOCK");
         
 
         // 롤백이 잘되어 주문이 저장되지 않았는 가, 재고가 차감되지 않았는 가
         assertThat(orderRepository.count()).isEqualTo(0);
         Optional<ProductEntity> productA = productRepository.findById(itemA.getProductSeq());
         assertThat(productA.get().getStock()).isEqualTo(10);
+    }
+
+    @Test 
+    public void insertOrdersNotFoundProductSeq() {
+        OrderItemRequest itemA = new OrderItemRequest(1_000_000L, 10);
+        List<OrderItemRequest> oRequests = List.of(itemA);
+        OrderRequest orderRequest = new OrderRequest(oRequests);
+
+        assertThatThrownBy(() -> orderService.insertOrders(orderRequest)).isInstanceOf(CustomException.class)
+            .hasMessageContaining("존재하지 않는 상품입니다.").extracting("code").isEqualTo("PRODUCT_NOT_FOUND");
     }
 }
