@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,9 @@ import com.truthgarnet.shopping.product.ProductEntity;
 import com.truthgarnet.shopping.product.ProductRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -34,7 +37,7 @@ public class OrderService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
-    @Transactional 
+    @Transactional
     public OrderResponse insertOrders(OrderRequest orderRequest) {
         // 1. order 생성
         OrderEntity orderEntity = new OrderEntity();
@@ -52,10 +55,20 @@ public class OrderService {
 
         List<ProductEntity> products = productRepository.findByProductSeqInOrderByProductSeqAsc(productSeqs);
 
+        // 2-1. 상품이 없는 경우 로그 처리
+        Set<Long> existsSeqs = products.stream().map(ProductEntity::getProductSeq).collect(Collectors.toSet());
+
+        List<Long> missingSeqs = productSeqs.stream().filter(seq ->  !existsSeqs.contains(seq)).collect(Collectors.toList());
+
+        if (!missingSeqs.isEmpty()) {
+            log.warn("상품이 존재하지 않는 Seqs: {}", missingSeqs);
+            throw new CustomException("PRODUCT_NOT_FOUND", "존재하지 않는 상품입니다.");
+        }
+    
         Map<Long, ProductEntity> productMap = products.stream()
-            .collect(Collectors.toMap(
-                ProductEntity::getProductSeq, product -> product
-            ));
+                .collect(Collectors.toMap(
+                        ProductEntity::getProductSeq, product -> product));
+
         
         // 3. product 재고 빼기
         for (OrderItemRequest orderItem : orderRequest.getItems()) {
@@ -85,10 +98,13 @@ public class OrderService {
             orderItems.add(orderItem);
         }
         List<OrderItemEntity> orderItemEntity = orderItemRepository.saveAll(orderItems);
-        
-        List<OrderItemResponse> orderItemResponses = orderItemEntity.stream().map(entity -> new OrderItemResponse(entity.getOrderItemSeq(), entity.getProductSeq(), entity.getQuantity(), entity.getUnitPrice())).collect(Collectors.toList());
+
+        List<OrderItemResponse> orderItemResponses = orderItemEntity.stream()
+                .map(entity -> new OrderItemResponse(entity.getOrderItemSeq(), entity.getProductSeq(),
+                        entity.getQuantity(), entity.getUnitPrice()))
+                .collect(Collectors.toList());
 
         return new OrderResponse(saveOrder.getOrderSeq(), orderItemResponses, saveOrder.getStatus());
     }
-    
+
 }
