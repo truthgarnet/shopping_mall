@@ -28,34 +28,19 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class OrderService {
 
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private OrderItemRepository orderItemRepository;
+    private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
+    private final OrderItemRepository orderItemRepository;
 
     @Transactional
     public OrderResponse insertOrders(OrderRequest orderRequest) {
-        // 1. order 생성
-        OrderEntity orderEntity = new OrderEntity();
-
-        orderEntity.setStatus(OrderStatus.PENDING);
-
-        LocalDateTime now = LocalDateTime.now();
-        orderEntity.setCreatedAt(now);
-
-        OrderEntity saveOrder = orderRepository.save(orderEntity);
-
-        // 2. product 조회
+        // 0. product 조회
         List<OrderItemRequest> items = orderRequest.getItems();
         List<Long> productSeqs = items.stream().map(item -> (item.getProductSeq())).collect(Collectors.toList());
 
         List<ProductEntity> products = productRepository.findByProductSeqInOrderByProductSeqAsc(productSeqs);
 
-        // 2-1. 상품이 없는 경우 로그 처리
+        // 0-1. 상품이 없는 경우 로그 처리
         Set<Long> existsSeqs = products.stream().map(ProductEntity::getProductSeq).collect(Collectors.toSet());
 
         List<Long> missingSeqs = productSeqs.stream().filter(seq ->  !existsSeqs.contains(seq)).collect(Collectors.toList());
@@ -69,8 +54,7 @@ public class OrderService {
                 .collect(Collectors.toMap(
                         ProductEntity::getProductSeq, product -> product));
 
-        
-        // 3. product 재고 빼기
+        // 0-2. product 재고 빼기
         for (OrderItemRequest orderItem : orderRequest.getItems()) {
             ProductEntity product = productMap.get(orderItem.getProductSeq());
             int stock = product.getStock();
@@ -84,7 +68,18 @@ public class OrderService {
             productRepository.save(product);
         }
 
-        // 4. orderItem 생성
+        // 1. order 생성
+        OrderEntity orderEntity = new OrderEntity();
+
+        orderEntity.setStatus(OrderStatus.PENDING);
+
+        LocalDateTime now = LocalDateTime.now();
+        orderEntity.setCreatedAt(now);
+
+        OrderEntity saveOrder = orderRepository.save(orderEntity);
+
+
+        // 2. orderItem 생성
         List<OrderItemEntity> orderItems = new ArrayList<OrderItemEntity>();
         for (OrderItemRequest item : orderRequest.getItems()) {
             ProductEntity product = productMap.get(item.getProductSeq());
