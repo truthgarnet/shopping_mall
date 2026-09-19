@@ -28,6 +28,6 @@ public class GlobalExceptionalHandler {
 
         ErrorResponse fieldErrorResponses = new ErrorResponse(List.of(), e.getCode(), e.getMessage());
 
-        return new ResponseEntity<>(fieldErrorResponses, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(fieldErrorResponses, e.getHttpStatus());
     }
 }

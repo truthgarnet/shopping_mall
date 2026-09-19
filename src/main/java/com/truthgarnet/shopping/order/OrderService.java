@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +47,7 @@ public class OrderService {
 
         if (!missingSeqs.isEmpty()) {
             log.warn("상품이 존재하지 않는 Seqs: {}", missingSeqs);
-            throw new CustomException("PRODUCT_NOT_FOUND", "존재하지 않는 상품입니다.");
+            throw new CustomException("PRODUCT_NOT_FOUND", "존재하지 않는 상품입니다.", HttpStatus.BAD_REQUEST);
         }
     
         Map<Long, ProductEntity> productMap = products.stream()
@@ -62,7 +63,7 @@ public class OrderService {
                 stock -= orderItem.getQuantity();
                 product.setStock(stock);
             } else {
-                throw new CustomException("OUT_OF_STOCK", product.getProductName() + " 는 재고가 부족한 상품입니다.");
+                throw new CustomException("OUT_OF_STOCK", product.getProductName() + " 는 재고가 부족한 상품입니다.", HttpStatus.CONFLICT);
             }
             productRepository.save(product);
         }
