@@ -1,9 +1,7 @@
 package com.truthgarnet.shopping.common;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,9 +16,10 @@ public class GlobalExceptionalHandler {
         List<FieldErrorResponse> error = e.getFieldErrors().stream()
                 .map(e1 -> new FieldErrorResponse(e1.getField(), e1.getDefaultMessage())).toList();
 
-        ErrorResponse fieldErrorResponses = new ErrorResponse(error, "CM001", "입력값이 올바르지 않습니다.");
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT;
+        ErrorResponse fieldErrorResponses = new ErrorResponse(error, errorCode.getCode(), "입력값이 올바르지 않습니다.");
 
-        return new ResponseEntity<>(fieldErrorResponses, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(fieldErrorResponses, errorCode.getHttpStatus());
     }
 
     @ExceptionHandler(CustomException.class)
