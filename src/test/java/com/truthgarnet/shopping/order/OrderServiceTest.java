@@ -66,7 +66,7 @@ public class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(oRequests);
 
         assertThatThrownBy(() -> orderService.insertOrders(orderRequest)).isInstanceOf(CustomException.class)
-            .hasMessageContaining("는 재고가 부족한 상품입니다.").extracting("code").isEqualTo("OUT_OF_STOCK");
+            .hasMessageContaining("는 재고가 부족한 상품입니다.").extracting("code").isEqualTo("OD001");
         
 
         // 롤백이 잘되어 주문이 저장되지 않았는 가, 재고가 차감되지 않았는 가
@@ -82,6 +82,6 @@ public class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(oRequests);
 
         assertThatThrownBy(() -> orderService.insertOrders(orderRequest)).isInstanceOf(CustomException.class)
-            .hasMessageContaining("존재하지 않는 상품입니다.").extracting("code").isEqualTo("PRODUCT_NOT_FOUND");
+            .hasMessageContaining("존재하지 않는 상품입니다.").extracting("code").isEqualTo("PD001");
     }
 }

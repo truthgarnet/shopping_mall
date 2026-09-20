@@ -71,7 +71,7 @@ public class OrderValidationTest {
 
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("OUT_OF_STOCK"))
+                .andExpect(jsonPath("$.code").value("OD001"))
                 .andExpect(jsonPath("$.errors").isEmpty());
     }
 }

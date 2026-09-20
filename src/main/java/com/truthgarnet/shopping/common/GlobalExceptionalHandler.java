@@ -18,7 +18,7 @@ public class GlobalExceptionalHandler {
         List<FieldErrorResponse> error = e.getFieldErrors().stream()
                 .map(e1 -> new FieldErrorResponse(e1.getField(), e1.getDefaultMessage())).toList();
 
-        ErrorResponse fieldErrorResponses = new ErrorResponse(error, "INVALID_INPUT", "입력값이 올바르지 않습니다.");
+        ErrorResponse fieldErrorResponses = new ErrorResponse(error, "CM001", "입력값이 올바르지 않습니다.");
 
         return new ResponseEntity<>(fieldErrorResponses, HttpStatus.BAD_REQUEST);
     }
