@@ -42,9 +42,11 @@ public class OrderValidationTest {
         String body = """
                 {"items": [{"productSeq": 1, "quantity": 0}]}
                 """;
+
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT;
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("CM001"))
+                .andExpect(jsonPath("$.code").value(errorCode.getCode()))
                 .andExpect(jsonPath("$.errors[0].field").value("items[0].quantity"))
                 .andExpect(jsonPath( "$.errors[0].message").value("수량은 1개 이상이어야 합니다."));
 
@@ -66,12 +68,14 @@ public class OrderValidationTest {
                 """;
 
         // given
+
+        ErrorCode errorCode = ErrorCode.OUT_OF_STOCK;
         when(orderService.insertOrders(any()))
-                .thenThrow(new CustomException(ErrorCode.OUT_OF_STOCK, "상품 A는 재고가 부족한 상품입니다."));
+                .thenThrow(new CustomException(errorCode));
 
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value(ErrorCode.OUT_OF_STOCK.getCode()))
+                .andExpect(jsonPath("$.code").value(errorCode.getCode()))
                 .andExpect(jsonPath("$.errors").isEmpty());
     }
 }

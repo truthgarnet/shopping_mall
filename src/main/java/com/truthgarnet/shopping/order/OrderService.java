@@ -47,7 +47,7 @@ public class OrderService {
 
         if (!missingSeqs.isEmpty()) {
             log.warn("상품이 존재하지 않는 Seqs: {}", missingSeqs);
-            throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND, "존재하지 않는 상품입니다.");
+            throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
         }
     
         Map<Long, ProductEntity> productMap = products.stream()
@@ -63,7 +63,7 @@ public class OrderService {
                 stock -= orderItem.getQuantity();
                 product.setStock(stock);
             } else {
-                throw new CustomException(ErrorCode.OUT_OF_STOCK, product.getProductName() + " 는 재고가 부족한 상품입니다.");
+                throw new CustomException(ErrorCode.OUT_OF_STOCK);
             }
             productRepository.save(product);
         }

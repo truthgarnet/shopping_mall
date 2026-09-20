@@ -17,14 +17,13 @@ public class GlobalExceptionalHandler {
                 .map(e1 -> new FieldErrorResponse(e1.getField(), e1.getDefaultMessage())).toList();
 
         ErrorCode errorCode = ErrorCode.INVALID_INPUT;
-        ErrorResponse fieldErrorResponses = new ErrorResponse(error, errorCode.getCode(), "입력값이 올바르지 않습니다.");
+        ErrorResponse fieldErrorResponses = new ErrorResponse(error, errorCode.getCode(), errorCode.getMessage());
 
         return new ResponseEntity<>(fieldErrorResponses, errorCode.getHttpStatus());
     }
 
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ErrorResponse> handlerCustomException(CustomException e) {
-
         ErrorResponse fieldErrorResponses = new ErrorResponse(List.of(), e.getCode(), e.getMessage());
 
         return new ResponseEntity<>(fieldErrorResponses, e.getHttpStatus());
