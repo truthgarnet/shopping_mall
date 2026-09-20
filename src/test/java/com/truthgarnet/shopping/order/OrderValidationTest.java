@@ -9,12 +9,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.truthgarnet.shopping.common.CustomException;
+import com.truthgarnet.shopping.common.ErrorCode;
 
 @WebMvcTest(OrderController.class)
 public class OrderValidationTest {
@@ -67,7 +67,7 @@ public class OrderValidationTest {
 
         // given
         when(orderService.insertOrders(any()))
-                .thenThrow(new CustomException("OUT_OF_STOCK", "상품 A는 재고가 부족한 상품입니다.", HttpStatus.CONFLICT));
+                .thenThrow(new CustomException(ErrorCode.OUT_OF_STOCK, "상품 A는 재고가 부족한 상품입니다."));
 
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isConflict())
