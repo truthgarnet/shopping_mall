@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import com.truthgarnet.shopping.common.CustomException;
+import com.truthgarnet.shopping.common.ErrorCode;
 import com.truthgarnet.shopping.orderItem.OrderItemRepository;
 import com.truthgarnet.shopping.orderItem.OrderItemRequest;
 import com.truthgarnet.shopping.product.ProductEntity;
@@ -66,7 +67,7 @@ public class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(oRequests);
 
         assertThatThrownBy(() -> orderService.insertOrders(orderRequest)).isInstanceOf(CustomException.class)
-            .hasMessageContaining("는 재고가 부족한 상품입니다.").extracting("code").isEqualTo("OD001");
+            .hasMessageContaining("는 재고가 부족한 상품입니다.").extracting("code").isEqualTo(ErrorCode.OUT_OF_STOCK.getCode());
         
 
         // 롤백이 잘되어 주문이 저장되지 않았는 가, 재고가 차감되지 않았는 가
@@ -82,6 +83,6 @@ public class OrderServiceTest {
         OrderRequest orderRequest = new OrderRequest(oRequests);
 
         assertThatThrownBy(() -> orderService.insertOrders(orderRequest)).isInstanceOf(CustomException.class)
-            .hasMessageContaining("존재하지 않는 상품입니다.").extracting("code").isEqualTo("PD001");
+            .hasMessageContaining("존재하지 않는 상품입니다.").extracting("code").isEqualTo(ErrorCode.PRODUCT_NOT_FOUND.getCode());
     }
 }

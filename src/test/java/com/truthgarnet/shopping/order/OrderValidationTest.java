@@ -32,7 +32,7 @@ public class OrderValidationTest {
                 """;
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.code").value("CM001"))
                 .andExpect(jsonPath("$.errors[0].field").value("items"))
                 .andExpect(jsonPath( "$.errors[0].message").value("주문상품을 넣어주세요."));
     }
@@ -44,7 +44,7 @@ public class OrderValidationTest {
                 """;
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.code").value("CM001"))
                 .andExpect(jsonPath("$.errors[0].field").value("items[0].quantity"))
                 .andExpect(jsonPath( "$.errors[0].message").value("수량은 1개 이상이어야 합니다."));
 
@@ -71,7 +71,7 @@ public class OrderValidationTest {
 
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("OD001"))
+                .andExpect(jsonPath("$.code").value(ErrorCode.OUT_OF_STOCK.getCode()))
                 .andExpect(jsonPath("$.errors").isEmpty());
     }
 }
