@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.truthgarnet.shopping.common.CustomException;
 import com.truthgarnet.shopping.common.ErrorCode;
+import com.truthgarnet.shopping.common.FieldErrorResponse;
 import com.truthgarnet.shopping.order.OrderEntity.OrderStatus;
 import com.truthgarnet.shopping.orderItem.OrderItemEntity;
 import com.truthgarnet.shopping.orderItem.OrderItemRepository;
@@ -43,28 +44,50 @@ public class OrderService {
         // 0-1. 상품이 없는 경우 로그 처리
         Set<Long> existsSeqs = products.stream().map(ProductEntity::getProductSeq).collect(Collectors.toSet());
 
-        List<Long> missingSeqs = productSeqs.stream().filter(seq ->  !existsSeqs.contains(seq)).collect(Collectors.toList());
+        // 0-1-1. 존재하지 않는 상품 에러 처리
+        List<FieldErrorResponse> notFoundErrors = new ArrayList<>();
+        for (int i = 0; i < items.size(); i++) {
+            Long seq = items.get(i).getProductSeq();
 
-        if (!missingSeqs.isEmpty()) {
-            log.warn("상품이 존재하지 않는 Seqs: {}", missingSeqs);
-            throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
+            if (!existsSeqs.contains(seq)) {
+                notFoundErrors.add(new FieldErrorResponse("items[" + i + "].productSeq",
+                        ErrorCode.PRODUCT_NOT_FOUND.getMessage()));
+            }
         }
-    
+
+        if (!notFoundErrors.isEmpty()) {
+            log.warn("상품이 존재하지 않는 Seqs: {}", notFoundErrors);
+            throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND, notFoundErrors);
+        }
+
         Map<Long, ProductEntity> productMap = products.stream()
                 .collect(Collectors.toMap(
                         ProductEntity::getProductSeq, product -> product));
 
         // 0-2. product 재고 빼기
+        List<FieldErrorResponse> outOfErrors = new ArrayList<>();
+        for (int i = 0; i < orderRequest.getItems().size(); i++) {
+            OrderItemRequest orderItem = orderRequest.getItems().get(i);
+            ProductEntity product = productMap.get(orderItem.getProductSeq());
+            int stock = product.getStock();
+
+            if (stock - orderItem.getQuantity() < 0) {
+                outOfErrors.add(new FieldErrorResponse("items[" + i + "].productSeq",
+                        ErrorCode.OUT_OF_STOCK.getMessage()));
+            }
+        }
+
+        if (!outOfErrors.isEmpty()) {
+            throw new CustomException(ErrorCode.OUT_OF_STOCK, outOfErrors);
+        }
+
         for (OrderItemRequest orderItem : orderRequest.getItems()) {
             ProductEntity product = productMap.get(orderItem.getProductSeq());
             int stock = product.getStock();
 
-            if (stock - orderItem.getQuantity() >= 0) {
-                stock -= orderItem.getQuantity();
-                product.setStock(stock);
-            } else {
-                throw new CustomException(ErrorCode.OUT_OF_STOCK);
-            }
+            stock -= orderItem.getQuantity();
+            product.setStock(stock);
+
             productRepository.save(product);
         }
 
@@ -77,7 +100,6 @@ public class OrderService {
         orderEntity.setCreatedAt(now);
 
         OrderEntity saveOrder = orderRepository.save(orderEntity);
-
 
         // 2. orderItem 생성
         List<OrderItemEntity> orderItems = new ArrayList<OrderItemEntity>();
