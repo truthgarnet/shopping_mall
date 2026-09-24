@@ -1,10 +1,15 @@
 package com.truthgarnet.shopping.order;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +20,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.truthgarnet.shopping.common.CustomException;
 import com.truthgarnet.shopping.common.ErrorCode;
+import com.truthgarnet.shopping.common.FieldErrorResponse;
+import com.truthgarnet.shopping.orderItem.OrderItemRequest;
 
 @WebMvcTest(OrderController.class)
 public class OrderValidationTest {
@@ -63,19 +70,22 @@ public class OrderValidationTest {
 
     @Test
     void lack_quantity_is_OUT_OF_STOCK() throws Exception {
-        String body = """
-                {"items": [{"productSeq": 1, "quantity": 5}]}
-                """;
+        OrderItemRequest orderItemRequest = new OrderItemRequest(1L, 5);
+        List<OrderItemRequest> items = new ArrayList<>();
+        items.add(orderItemRequest);
+        OrderRequest orderRequest = new OrderRequest(items);
 
         // given
-
         ErrorCode errorCode = ErrorCode.OUT_OF_STOCK;
-        when(orderService.insertOrders(any()))
-                .thenThrow(new CustomException(errorCode));
 
-        mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value(errorCode.getCode()))
-                .andExpect(jsonPath("$.errors").isEmpty());
-    }
+        List<FieldErrorResponse> errors = List.of(new FieldErrorResponse("items[0].productSeq", errorCode.getMessage()));
+
+        when(orderService.insertOrders(any()))
+                .thenThrow(new CustomException(errorCode, errors));
+
+        CustomException e = catchThrowableOfType(CustomException.class, () -> orderService.insertOrders(orderRequest));
+        assertThat(e.getErrors()).hasSize(1)
+                .extracting(FieldErrorResponse::getField)
+                .containsExactly("items[0].productSeq");
+        }
 }
