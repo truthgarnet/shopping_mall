@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import com.truthgarnet.shopping.common.CustomException;
 import com.truthgarnet.shopping.common.ErrorCode;
+import com.truthgarnet.shopping.common.FieldErrorResponse;
 import com.truthgarnet.shopping.orderItem.OrderItemRepository;
 import com.truthgarnet.shopping.orderItem.OrderItemRequest;
 import com.truthgarnet.shopping.product.ProductEntity;
@@ -69,8 +70,7 @@ public class OrderServiceTest {
         ErrorCode errorCode = ErrorCode.OUT_OF_STOCK;
 
         assertThatThrownBy(() -> orderService.insertOrders(orderRequest)).isInstanceOf(CustomException.class)
-            .hasMessageContaining(errorCode.getMessage()).extracting("code").isEqualTo(errorCode.getCode());
-        
+                .hasMessageContaining(errorCode.getMessage()).extracting("code").isEqualTo(errorCode.getCode());
 
         // 롤백이 잘되어 주문이 저장되지 않았는 가, 재고가 차감되지 않았는 가
         assertThat(orderRepository.count()).isEqualTo(0);
@@ -78,7 +78,7 @@ public class OrderServiceTest {
         assertThat(productA.get().getStock()).isEqualTo(10);
     }
 
-    @Test 
+    @Test
     public void insertOrdersNotFoundProductSeq() {
         OrderItemRequest itemA = new OrderItemRequest(1_000_000L, 10);
         List<OrderItemRequest> oRequests = List.of(itemA);
@@ -87,6 +87,22 @@ public class OrderServiceTest {
         ErrorCode errorCode = ErrorCode.PRODUCT_NOT_FOUND;
 
         assertThatThrownBy(() -> orderService.insertOrders(orderRequest)).isInstanceOf(CustomException.class)
-            .hasMessageContaining(errorCode.getMessage()).extracting("code").isEqualTo(errorCode.getCode());
+                .hasMessageContaining(errorCode.getMessage()).extracting("code").isEqualTo(errorCode.getCode());
+    }
+
+    @Test
+    public void insertOrdersOutOfStockErrors() {
+        // when 주문 요청을 만든다.
+        OrderItemRequest itemA = new OrderItemRequest(saveProductsSeq.get(0), 5);
+        OrderItemRequest itemB = new OrderItemRequest(saveProductsSeq.get(1), 10);
+
+        List<OrderItemRequest> oRequests = List.of(itemA, itemB);
+        OrderRequest orderRequest = new OrderRequest(oRequests);
+
+        CustomException e = catchThrowableOfType(CustomException.class, () -> orderService.insertOrders(orderRequest));
+        assertThat(e.getCode()).isEqualTo(ErrorCode.OUT_OF_STOCK.getCode());
+        assertThat(e.getErrors()).hasSize(1)
+                .extracting(FieldErrorResponse::getField)
+                .containsExactly("items[1].productSeq");
     }
 }
