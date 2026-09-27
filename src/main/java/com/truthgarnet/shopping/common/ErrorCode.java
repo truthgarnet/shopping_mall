@@ -8,6 +8,7 @@ import lombok.Getter;
 public enum ErrorCode {
     // common
     INVALID_INPUT("CM001", "입력값이 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
+    INTERNAL_SERVER_ERROR("CM002", "서버에 문제가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
     PRODUCT_NOT_FOUND("PD001", "존재하지 않는 상품입니다.",HttpStatus.BAD_REQUEST),
     OUT_OF_STOCK("OD001", "재고가 부족한 상품이 있습니다.", HttpStatus.CONFLICT);

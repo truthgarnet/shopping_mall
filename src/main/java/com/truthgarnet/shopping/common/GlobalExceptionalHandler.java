@@ -7,6 +7,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j 
 @RestControllerAdvice
 public class GlobalExceptionalHandler {
 
@@ -18,6 +21,19 @@ public class GlobalExceptionalHandler {
 
         ErrorCode errorCode = ErrorCode.INVALID_INPUT;
         ErrorResponse fieldErrorResponses = new ErrorResponse(error, errorCode.getCode(), errorCode.getMessage());
+
+        return new ResponseEntity<>(fieldErrorResponses, errorCode.getHttpStatus());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handlerServerException(Exception e) {
+
+        List<FieldErrorResponse> error = List.of();
+
+        ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
+        ErrorResponse fieldErrorResponses = new ErrorResponse(error, errorCode.getCode(), errorCode.getMessage());
+
+        log.error("서버 에러: ", e);
 
         return new ResponseEntity<>(fieldErrorResponses, errorCode.getHttpStatus());
     }
